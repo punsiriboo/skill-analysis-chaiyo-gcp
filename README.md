@@ -52,6 +52,43 @@
 - ใช้ `PROJECT_ID` / `LOCATION_ID` จาก `params.sh` (แต่ override ได้ด้วย env `GCP_PROJECT_ID`, `GCP_REGION`)
 - deploy ด้วย `gcloud run deploy` โดยอ่านค่า env จาก `env.yaml`
 
+### Logic การคำนวณ Role (สายอาชีพหลัก)
+
+1. **ดึงและจัดกลุ่ม Badge**
+   - ดึง HTML โปรไฟล์ Google Skills → แยกเฉพาะบรรทัดที่ขึ้นต้นด้วย `Earned ...` และใช้บรรทัดก่อนหน้าเป็นชื่อ badge
+   - หาปีจากข้อความวันที่ (รูปแบบ `20XX`) แล้วเก็บเป็น `{ name, year }`
+   - ลบ badge ซ้ำ (ใช้ชื่อ badge เป็น key) เหลือเฉพาะ unique badges
+
+2. **จัดหมวดหมู่ (categoriesMap)**
+   - แต่ละ badge นำ **ชื่อ badge** ไปเทียบกับ **keywords** ของแต่ละหมวดใน `categoriesMap` (เทียบแบบรวมข้อความ lowercase)
+   - หมวดแรกที่ **มี keyword ใด keyword หนึ่งอยู่ในชื่อ badge** จะถูกนับใน `results[category]` และหยุดเทียบหมวดถัดไป (first match wins)
+   - ถ้าไม่ match หมวดใดเลย และชื่อ badge ยาวกว่า 5 ตัวอักษร → นับเป็น **Other Skills**
+
+3. **หาสายอาชีพหลัก (dominantCategory)**
+   - ใน `results` เลือกหมวดที่มี **จำนวน badge สูงสุด** เป็น dominant category
+   - **ไม่นำ "Other Skills" มาใช้เป็น dominant** (ใช้เฉพาะเมื่อทุกหมวดเป็น 0)
+   - ถ้าทุกหมวดเป็น 0 → ใช้ `"Other Skills"` เป็น dominant
+
+4. **แสดงผล Role และ Mascot**
+   - **ข้อความสายอาชีพ:** `roleNamesMap[dominantCategory]` (เช่น "Data Engineer", "ML Engineer")
+   - **Mascot:** ฟังก์ชัน `getMascotSvg(dominantCategory)` เลือก SVG ตาม dominant category
+
+**หมวดและ Role ที่รองรับ (ในโค้ดปัจจุบัน):**
+
+| หมวด (category)        | แสดงเป็น (role)        |
+|------------------------|------------------------|
+| Generative AI & LLM    | AI Prompt Engineer     |
+| Machine Learning & AI  | ML Engineer             |
+| Data Engineering       | Data Engineer           |
+| Data Analytics         | Data Analyst            |
+| Cloud Infra            | Cloud / DevOps Engineer |
+| Security               | Security Engineer       |
+| App Dev & Tools        | Software Developer      |
+| Other Skills           | Tech Generalist         |
+| (ไม่มี badge)          | Future Tech Star        |
+
+แก้ไข keywords ได้ที่ `categoriesMap` และชื่อที่แสดงได้ที่ `roleNamesMap` ใน `index.html`
+
 ### การทำงานของ server
 
 - `server.js` จะ:
