@@ -1,0 +1,8 @@
+# ไม่ส่งไฟล์เหล่านี้ตอน build
+.git
+.gitignore
+.gcloudignore
+env.yaml
+env.yml
+*.md
+deployment/
