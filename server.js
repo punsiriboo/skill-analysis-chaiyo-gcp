@@ -10,9 +10,19 @@ const PORT = process.env.PORT || 8080;
 const INDEX_PATH = path.join(__dirname, 'index.html');
 
 const server = http.createServer((req, res) => {
-  if (req.url !== '/' && req.url !== '/index.html') {
+  const pathOnly = req.url?.split('?')[0] || '/';
+  const hasQuery = (req.url?.includes('?'));
+
+  if (pathOnly !== '/' && pathOnly !== '/index.html') {
     res.writeHead(404);
     res.end('Not Found');
+    return;
+  }
+
+  // ถ้ามี query params (เช่น fbclid จาก Facebook) redirect ไป URL สะอาด
+  if (hasQuery) {
+    res.writeHead(302, { Location: pathOnly });
+    res.end();
     return;
   }
 
